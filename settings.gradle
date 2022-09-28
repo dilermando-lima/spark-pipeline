@@ -1,0 +1,5 @@
+rootProject.name = 'spark-pipeline'
+include (
+    "core",
+    "example"
+)
