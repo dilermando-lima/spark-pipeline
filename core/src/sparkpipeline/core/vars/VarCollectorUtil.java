@@ -33,9 +33,8 @@ public class VarCollectorUtil {
         return handleDeclarationsInValues(mapVars, value, null);
     }
 
-    @SuppressWarnings("java:S3776")
-    public static Object handleDeclarationsInValues(Map<String, Object> mapVars, Object valueObject,
-            String nameVarToAvoidRecursion) {
+    @SuppressWarnings({"java:S3776","java:S5857"})
+    public static Object handleDeclarationsInValues(Map<String, Object> mapVars, Object valueObject, String nameVarToAvoidRecursion) {
         if (valueObject == null)
             return null;
         if (!(valueObject instanceof String))
@@ -45,7 +44,7 @@ public class VarCollectorUtil {
 
         nameVarToAvoidRecursion = normalizeNameVar(nameVarToAvoidRecursion);
 
-        Pattern r = Pattern.compile("\\$\\{.{0,255}}");
+        Pattern r = Pattern.compile("\\$\\{.*?}");
         Matcher m = r.matcher(value);
         while (m.find()) {
             String keyReplacementGroup = m.group();
@@ -66,16 +65,16 @@ public class VarCollectorUtil {
                 throw new IllegalArgumentException(
                         String.format("var %s has a value that requires itself", nameVarToAvoidRecursion));
 
-            String valueFind = (String) mapVars.get(keyReplacementNameVar);
+            String valueFind = String.valueOf(mapVars.get(keyReplacementNameVar));
 
-            if (valueFind == null) {
-                valueFind = System.getenv(keyReplacementNameVar);
-                if (valueFind != null) {
+            if (valueFind.equals("null")) {
+                valueFind = String.valueOf(System.getenv(keyReplacementNameVar));
+                if (!valueFind.equals("null")) {
                     valueFind = (String) handleDeclarationsInValues(mapVars, valueFind, keyReplacementNameVar);
                 }
             }
 
-            if (valueFind == null) {
+            if (valueFind.equals("null")) {
                 valueFind = defaultValue;
             }
             value = value.replace(keyReplacementGroup, valueFind);

@@ -1,5 +1,7 @@
 package sparkpipeline.core.context;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -8,11 +10,11 @@ import sparkpipeline.core.constant.Msg;
 public class ControllerExecution {
 
     public enum ActionType {
-        
+
         RUN_NEXT(controllerExecution -> controllerExecution.currentRunning++),
-        RE_RUN_CURRENT_ONE(controllerExecution -> controllerExecution.currentRunning = controllerExecution.currentRunning - 2),
+        RE_RUN_CURRENT_ONE(controllerExecution -> controllerExecution.currentRunning--),
         ABORT_PIPELINE(controllerExecution -> controllerExecution.currentRunning = controllerExecution.sizeRunning + 1),
-        START_OVER(controllerExecution -> controllerExecution.currentRunning = INITIAL_INT_RUNNING),
+        START_OVER(controllerExecution -> controllerExecution.currentRunning = INITIAL_INT_RUNNING - 1),
         ;
 
         private final Consumer<ControllerExecution> action;
@@ -26,7 +28,28 @@ public class ControllerExecution {
         }
     }
 
-    public static final int INITIAL_INT_RUNNING = 0;
+    private static final Map<String, Integer> timesExecutionControllerMap = new HashMap<>();
+
+    private void setTimesExecutionToCurrentRunning(Integer times, ActionType action) {
+
+        String keyTimesExecutionController = action.name() + "-" + getCurrentRunning();
+
+        if (timesExecutionControllerMap.containsKey(keyTimesExecutionController)){
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Action '%s' has already been set in step '%s' as '%s' times",
+                            action.name(),
+                            getCurrentRunning(),
+                            timesExecutionControllerMap.get(keyTimesExecutionController)));
+        }
+
+        times = (times == null || times < 0) ? 0 : times;
+
+        timesExecutionControllerMap.put(keyTimesExecutionController, times);
+
+    }
+
+    private static final int INITIAL_INT_RUNNING = 0;
 
     private int currentRunning = INITIAL_INT_RUNNING;
     private Integer sizeRunning = null;
@@ -49,7 +72,7 @@ public class ControllerExecution {
         return currentRunning;
     }
 
-    public void doAction(ActionType action) {
+    public void doAction(ActionType action, Integer times) {
         Objects.requireNonNull(action, Msg.ACTION_CANNOT_BE_NULL);
         action.action().accept(this);
     }

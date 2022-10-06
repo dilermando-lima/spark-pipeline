@@ -38,7 +38,7 @@ public class ReaderJDBC extends AbstractReader<ReaderJDBC> {
 
         logger.info("options to be handled {}", options);
         Map<String, String> optionsHandled = options.entrySet().stream().collect(
-                Collectors.toMap(Map.Entry::getKey, entry -> context.handleStringOnContextVars(entry.getValue())));
+                Collectors.toMap(Map.Entry::getKey, entry -> context.handleStringFromContextVars(entry.getValue())));
         logger.info("options handled on context {}", optionsHandled);
         return optionsHandled;
     }

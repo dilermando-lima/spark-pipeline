@@ -1,32 +1,35 @@
 package sparkpipeline.core.context;
 
-import org.apache.spark.SparkConf;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import sparkpipeline.core.log.LogConfig;
-import sparkpipeline.core.vars.VarCollector;
-import sparkpipeline.core.vars.VarCollectorApplication;
-import sparkpipeline.core.vars.VarCollectorMap;
-import sparkpipeline.core.vars.VarCollectorProperties;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.Function;
+
+import org.apache.spark.SparkConf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import sparkpipeline.core.log.LogConfig;
+import sparkpipeline.core.vars.VarCollector;
+import sparkpipeline.core.vars.VarCollectorApplication;
+import sparkpipeline.core.vars.VarCollectorFile;
+import sparkpipeline.core.vars.VarCollectorMap;
 
 public class PipelineContextBuilder {
-    
+
     Logger logger;
 
     private final List<VarCollector> collectorList = new LinkedList<>();
     private LogConfig logConfig = null;
     private PipelineContext context = null;
-    private static final Supplier<SparkConf> DEFAULT_SPARK_CONFIG_CREATOR = () -> new SparkConf()
+    private static final Function<PipelineContext,SparkConf>  DEFAULT_SPARK_CONFIG_BUILDER = c -> new SparkConf()
             .setAppName("DEFAULT-APP")
             .setMaster("local[1]")
             .set("spark.sql.shuffle.partitions", "1")
             .set("spark.ui.enabled", "false");
+
+    private Function<PipelineContext,SparkConf> sparkConfigBuilder = null;
 
     private final List<Runnable> afterStartLogConfig = new LinkedList<>();
     private final List<Runnable> beforeStartContext = new LinkedList<>();
@@ -48,8 +51,8 @@ public class PipelineContextBuilder {
         return this;
     }
 
-    public PipelineContextBuilder collectVarsFromProperties(String path) {
-        collectorList.add(VarCollectorProperties.init(path));
+    public PipelineContextBuilder collectVarsFromFile(String path) {
+        collectorList.add(VarCollectorFile.init(path));
         return this;
     }
 
@@ -75,7 +78,7 @@ public class PipelineContextBuilder {
         return this;
     }
 
-    public PipelineContextBuilder beforeStartContext(Consumer<PipelineContext> consumer) {
+    public PipelineContextBuilder afterStartContext(Consumer<PipelineContext> consumer) {
         if (consumer != null)
             afterStartContext.add(consumer);
         return this;
@@ -84,6 +87,11 @@ public class PipelineContextBuilder {
     public PipelineContextBuilder afterRetrieveAllContextVars(Consumer<PipelineContext> consumer) {
         if (consumer != null)
             afterRetrieveAllContextVars.add(consumer);
+        return this;
+    }
+
+    public PipelineContextBuilder sparkConfigBuilder(Function<PipelineContext,SparkConf> sparkConfigBuilder) {
+        this.sparkConfigBuilder = sparkConfigBuilder;
         return this;
     }
 
@@ -107,7 +115,9 @@ public class PipelineContextBuilder {
 
         afterStartLogConfig.forEach(Runnable::run);
 
-        context = new PipelineContext(new CommandQueue(new DatasetStore()), DEFAULT_SPARK_CONFIG_CREATOR);
+        context = new PipelineContext(
+                new CommandQueue(new DatasetStore()),
+                sparkConfigBuilder == null ? DEFAULT_SPARK_CONFIG_BUILDER : sparkConfigBuilder);
 
         afterStartContext.forEach(consumer -> consumer.accept(context));
 

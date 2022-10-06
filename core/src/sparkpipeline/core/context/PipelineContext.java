@@ -1,5 +1,10 @@
 package sparkpipeline.core.context;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.Dataset;
@@ -11,11 +16,6 @@ import org.slf4j.LoggerFactory;
 import sparkpipeline.core.constant.Msg;
 import sparkpipeline.core.vars.VarCollectorUtil;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Supplier;
-
 public class PipelineContext {
 
     static final Logger logger = LoggerFactory.getLogger(PipelineContext.class);
@@ -23,14 +23,14 @@ public class PipelineContext {
     private SparkSession sparkSession = null;
     private final CommandQueue queue;
     private final Map<String, Object> variableMap = new HashMap<>();
-    private final Supplier<SparkConf> sparkConfigCreator;
+    private final Function<PipelineContext,SparkConf> sparkConfigBuilder;
 
-    public PipelineContext(CommandQueue queue, Supplier<SparkConf> sparkConfigCreator) {
+    public PipelineContext(CommandQueue queue, Function<PipelineContext,SparkConf> sparkConfigBuilder) {
         Objects.requireNonNull(queue, Msg.QUEUE_CANNOT_BE_NULL);
-        Objects.requireNonNull(sparkConfigCreator, Msg.SPARKCOFIG_CREATOR_CANNOT_BE_NULL);
+        Objects.requireNonNull(sparkConfigBuilder, Msg.SPARKCOFIG_BUILDER_CANNOT_BE_NULL);
         Objects.requireNonNull(variableMap, Msg.VARIABLE_MAP_CANNOT_BE_NULL);
         this.queue = queue;
-        this.sparkConfigCreator = sparkConfigCreator;
+        this.sparkConfigBuilder = sparkConfigBuilder;
     }
 
     public DatasetStore datasetStore() {
@@ -56,7 +56,7 @@ public class PipelineContext {
         return this;
     }
 
-    public String handleStringOnContextVars(String string) {
+    public String handleStringFromContextVars(String string) {
         return (String) VarCollectorUtil.handleDeclarationsInValues(this.variableMap, string);
     }
 
@@ -80,21 +80,21 @@ public class PipelineContext {
         if (sparkSession == null) {
             logger.info("Starting sparkSession");
             sparkSession = SparkSession.builder()
-                            .sparkContext(new SparkContext(sparkConfigCreator.get()))
+                            .sparkContext(new SparkContext(sparkConfigBuilder.apply(this)))
                             .getOrCreate();
         }
         return sparkSession;
     }
 
-    public void executionReRunCurrentOne() {
-        this.commandQueue().doActionIntoExecution(ControllerExecution.ActionType.RE_RUN_CURRENT_ONE);
+    public void executionReRunCurrentOne(Integer times) {
+        this.commandQueue().doActionIntoExecution(ControllerExecution.ActionType.RE_RUN_CURRENT_ONE, times);
     }
 
-    public void executionReRunAllPipeline() {
-        this.commandQueue().doActionIntoExecution(ControllerExecution.ActionType.START_OVER);
+    public void executionReRunAllPipeline(Integer times) {
+        this.commandQueue().doActionIntoExecution(ControllerExecution.ActionType.START_OVER, times);
     }
 
     public void executionAbortAllPipeline() {
-        this.commandQueue().doActionIntoExecution(ControllerExecution.ActionType.ABORT_PIPELINE);
+        this.commandQueue().doActionIntoExecution(ControllerExecution.ActionType.ABORT_PIPELINE, null);
     }
 }

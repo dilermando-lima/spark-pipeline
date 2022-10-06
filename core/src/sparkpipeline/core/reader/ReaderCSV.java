@@ -46,14 +46,14 @@ public class ReaderCSV extends AbstractReader<ReaderCSV> {
         Map<String, String> optionsHandled = options.entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
-                        entry -> context.handleStringOnContextVars(entry.getValue())));
+                        entry -> context.handleStringFromContextVars(entry.getValue())));
         logger.info("options handled on context {}", optionsHandled);
         return optionsHandled;
     }
 
     private String[] handlePathsFromContext(PipelineContext context) {
         logger.info("paths to be handled {}", Arrays.asList(path));
-        String[] pathsHandled = Arrays.stream(path).map(context::handleStringOnContextVars).toArray(String[]::new);
+        String[] pathsHandled = Arrays.stream(path).map(context::handleStringFromContextVars).toArray(String[]::new);
         logger.info("paths handled on context {}", Arrays.asList(pathsHandled));
         return pathsHandled;
     }

@@ -58,8 +58,8 @@ public class CommandQueue {
         this.datasetStore = datasetStore;
     }
 
-    public void doActionIntoExecution(ControllerExecution.ActionType action) {
-        this.controllerExecution.doAction(action);
+    public void doActionIntoExecution(ControllerExecution.ActionType action,Integer times) {
+        this.controllerExecution.doAction(action,times);
     }
 
     public DatasetStore datasetStore() {
@@ -94,7 +94,7 @@ public class CommandQueue {
             logger.info("command_index = {} , command_metadata = {}", this.controllerExecution.getCurrentRunning(),
                     commandMetadata);
             commandMetadata.command.changeDatasetStore(context).accept(datasetStore);
-            this.controllerExecution.doAction(ControllerExecution.ActionType.RUN_NEXT);
+            this.controllerExecution.doAction(ControllerExecution.ActionType.RUN_NEXT,null);
         }
 
     }

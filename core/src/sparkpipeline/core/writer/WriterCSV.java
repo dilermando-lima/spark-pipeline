@@ -41,14 +41,14 @@ public class WriterCSV extends AbstractWriter<WriterCSV> {
 
         logger.info("options to be handled {}", options);
         Map<String, String> optionsHandled = options.entrySet().stream().collect(
-                Collectors.toMap(Map.Entry::getKey, entry -> context.handleStringOnContextVars(entry.getValue())));
+                Collectors.toMap(Map.Entry::getKey, entry -> context.handleStringFromContextVars(entry.getValue())));
         logger.info("options handled on context {}", optionsHandled);
         return optionsHandled;
     }
 
     private String handlePathFromContext(PipelineContext context) {
         logger.info("paths to be handled {}", path);
-        String pathHandled = context.handleStringOnContextVars(path);
+        String pathHandled = context.handleStringFromContextVars(path);
         logger.info("paths handled on context {}", pathHandled);
         return pathHandled;
     }

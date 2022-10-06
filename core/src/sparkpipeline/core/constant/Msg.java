@@ -13,7 +13,7 @@ public class Msg {
     public static final String CONTEXT_CANNOT_BE_NULL = "context cannot be null";
     public static final String ACTION_CANNOT_BE_NULL = "action cannot be null";
     public static final String QUEUE_CANNOT_BE_NULL = "queue cannot be null";
-    public static final String SPARKCOFIG_CREATOR_CANNOT_BE_NULL = "sparkConfigCreator cannot be null";
+    public static final String SPARKCOFIG_BUILDER_CANNOT_BE_NULL = "sparkConfigBuilder cannot be null";
     public static final String VARIABLE_MAP_CANNOT_BE_NULL = "variableMap cannot be null";
 
 }
