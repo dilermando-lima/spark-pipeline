@@ -36,8 +36,21 @@ public class PipelineContextBuilder {
     private final List<Consumer<PipelineContext>> afterStartContext = new LinkedList<>();
     private final List<Consumer<PipelineContext>> afterRetrieveAllContextVars = new LinkedList<>();
 
+    private Integer maxAmountReRunPipeline;
+    private Integer maxAmountReRunEachStep;
+
     public static PipelineContextBuilder init() {
         return new PipelineContextBuilder();
+    }
+
+    public PipelineContextBuilder setMaxAmountReRunPipeline(Integer maxAmountReRunPipeline){
+        this.maxAmountReRunPipeline = maxAmountReRunPipeline;
+        return this;
+    }
+
+    public PipelineContextBuilder setMaxAmountReRunEachStep(Integer maxAmountReRunEachStep){
+        this.maxAmountReRunEachStep = maxAmountReRunEachStep;
+        return this;
     }
 
     public PipelineContextBuilder addVarCollector(VarCollector collector) {
@@ -65,6 +78,7 @@ public class PipelineContextBuilder {
         this.logConfig = logConfig;
         return this;
     }
+
 
     public PipelineContextBuilder afterStartLogConfig(Runnable runnable) {
         if (runnable != null)
@@ -116,7 +130,13 @@ public class PipelineContextBuilder {
         afterStartLogConfig.forEach(Runnable::run);
 
         context = new PipelineContext(
-                new CommandQueue(new DatasetStore()),
+                new CommandQueue(
+                    new DatasetStore(),
+                    new ControllerExecution(
+                        maxAmountReRunPipeline == null ? 1 : maxAmountReRunPipeline, 
+                        maxAmountReRunEachStep == null ? 1 : maxAmountReRunEachStep
+                        )
+                    ),
                 sparkConfigBuilder == null ? DEFAULT_SPARK_CONFIG_BUILDER : sparkConfigBuilder);
 
         afterStartContext.forEach(consumer -> consumer.accept(context));

@@ -1,5 +1,7 @@
 package sparkpipeline.example;
 
+import sparkpipeline.core.context.PipelineContext;
+import sparkpipeline.core.context.PipelineContextBuilder;
 import sparkpipeline.core.pipeline.Pipeline;
 
 class ManageStepFlow {
@@ -7,32 +9,43 @@ class ManageStepFlow {
 
     @SuppressWarnings({"java:S106","java:S1192","java:S1612"})
     public static void main(String[] args) {
-        Pipeline.init()
+
+
+        PipelineContextBuilder contextBuilder = PipelineContextBuilder.init()
+            .setMaxAmountReRunEachStep(3)
+            .setMaxAmountReRunPipeline(2);
+
+        Pipeline.initWithContextBuilder(contextBuilder)
                 // rerun current step
                 .anyRunning(context -> {
-                    System.out.println(" ==== STEP 2");
-
-                    context.newVar("COUNT_RUN_STEP_2", context.varByKey("COUNT_RUN_STEP_2",Integer.class) + 1);
-                   
-                    if( context.varByKey("COUNT_RUN_STEP_2",Integer.class) <= 3 ){
-                        System.out.println(" ==== STEP WILL BE RUN MORE ONE TIME");
-                        context.executionReRunCurrentOne(3);
-                    }
+                    printCurrentStepPosition(context);
+                    context.controllerExecution().reRunCurrentStep();
                 })
                 // rerun all pipeline
                 .anyRunning(context -> {
-                    System.out.println(" ==== STEP 3");
-
-                    context.newVar("COUNT_RUN_PIPELINE", context.varByKey("COUNT_RUN_PIPELINE",Integer.class) + 1);
-                   
-                    if( context.varByKey("COUNT_RUN_PIPELINE",Integer.class) <= 1 ){
-                        context.executionReRunAllPipeline(1);
-                    }
-
+                    printCurrentStepPosition(context);
+                    context.controllerExecution().reRunAllPipeline();
                 })
                 // abort all pipeline
-                .anyRunning(context -> context.executionAbortAllPipeline())
-                .anyRunning(context -> System.out.println("this step wont be run because pipeline has been aborted in previous one"))
+                .anyRunning(context -> {
+                    printCurrentStepPosition(context);
+                    context.controllerExecution().abortPipeline();
+                })
+                // step wont run
+                .anyRunning(context -> {
+                    printCurrentStepPosition(context);
+                    System.out.println("this step wont be run because pipeline has been aborted in previous one");
+                })
                 .execute();
+    }
+
+    @SuppressWarnings("java:S106")
+    private static void printCurrentStepPosition(PipelineContext context){
+        System.out.println(
+            String.format("step %d of %d from pipeline %d",
+                    context.controllerExecution().getCurrentPosition(),
+                    context.controllerExecution().getTimesAlreadyRunStep(context.controllerExecution().getCurrentPosition()),
+                    context.controllerExecution().getTimesAlreadyRunPipeline())
+                    );
     }
 }

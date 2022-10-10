@@ -3,78 +3,85 @@ package sparkpipeline.core.context;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
-
-import sparkpipeline.core.constant.Msg;
 
 public class ControllerExecution {
 
-    public enum ActionType {
+    private static final int INITIAL_INT_POSITION = 0;
 
-        RUN_NEXT(controllerExecution -> controllerExecution.currentRunning++),
-        RE_RUN_CURRENT_ONE(controllerExecution -> controllerExecution.currentRunning--),
-        ABORT_PIPELINE(controllerExecution -> controllerExecution.currentRunning = controllerExecution.sizeRunning + 1),
-        START_OVER(controllerExecution -> controllerExecution.currentRunning = INITIAL_INT_RUNNING - 1),
-        ;
+    private int currentPosition = INITIAL_INT_POSITION;
+    private Integer size = null;
 
-        private final Consumer<ControllerExecution> action;
+    private final Integer maxAmountReRunPipeline;
+    private final Integer maxAmountReRunEachStep;
+    private Map<Integer,Integer> timesAlreadyRunStepMap = new HashMap<>();
+    private Integer timesAlreadyRunPipeline = 1;
 
-        private ActionType(Consumer<ControllerExecution> action) {
-            this.action = action;
-        }
+    public ControllerExecution(Integer maxAmountReRunPipeline, Integer maxAmountReRunEachStep) {
+        Objects.requireNonNull(maxAmountReRunPipeline);
+        Objects.requireNonNull(maxAmountReRunEachStep);
+        this.maxAmountReRunPipeline = maxAmountReRunPipeline;
+        this.maxAmountReRunEachStep = maxAmountReRunEachStep;
+    }
 
-        public Consumer<ControllerExecution> action() {
-            return action;
+    private void incrementTimesAlreadyRunStep(){
+        if( timesAlreadyRunStepMap.containsKey(currentPosition) ){
+            timesAlreadyRunStepMap.put(currentPosition,  timesAlreadyRunStepMap.get(currentPosition) + 1);
+        }else{
+            timesAlreadyRunStepMap.put(currentPosition, 1);
         }
     }
 
-    private static final Map<String, Integer> timesExecutionControllerMap = new HashMap<>();
-
-    private void setTimesExecutionToCurrentRunning(Integer times, ActionType action) {
-
-        String keyTimesExecutionController = action.name() + "-" + getCurrentRunning();
-
-        if (timesExecutionControllerMap.containsKey(keyTimesExecutionController)){
-            throw new IllegalArgumentException(
-                    String.format(
-                            "Action '%s' has already been set in step '%s' as '%s' times",
-                            action.name(),
-                            getCurrentRunning(),
-                            timesExecutionControllerMap.get(keyTimesExecutionController)));
+    void setSize(int size) {
+        if( this.size == null ){
+            this.size = size;
+        }else{
+           throw new IllegalArgumentException("size has already been set and cannot be changed");
         }
-
-        times = (times == null || times < 0) ? 0 : times;
-
-        timesExecutionControllerMap.put(keyTimesExecutionController, times);
-
     }
 
-    private static final int INITIAL_INT_RUNNING = 0;
-
-    private int currentRunning = INITIAL_INT_RUNNING;
-    private Integer sizeRunning = null;
-
-    public void setSizeRunning(int size) {
-        this.sizeRunning = size;
+    public boolean next() {
+        runNext();
+        return currentPosition <= getSizeRunning();
     }
 
-    public boolean hasNext() {
-        return currentRunning <= getSizeRunning();
+    public int getTimesAlreadyRunPipeline(){
+        return this.timesAlreadyRunPipeline;
+    }
+
+    public Integer getTimesAlreadyRunStep(Integer stepPosition){
+        return this.timesAlreadyRunStepMap.get(stepPosition);
     }
 
     public int getSizeRunning() {
-        Objects.requireNonNull(sizeRunning,
-                String.format("sizeRunning has not been initialized in %s", this.getClass().getName()));
-        return sizeRunning;
+        Objects.requireNonNull(size, String.format("size has not been initialized in %s", this.getClass().getName()));
+        return size;
     }
 
-    public int getCurrentRunning() {
-        return currentRunning;
+    public int getCurrentPosition() {
+        return currentPosition;
     }
 
-    public void doAction(ActionType action, Integer times) {
-        Objects.requireNonNull(action, Msg.ACTION_CANNOT_BE_NULL);
-        action.action().accept(this);
+    private void runNext() {
+        currentPosition++;
+        incrementTimesAlreadyRunStep();
+    }
+
+    public void reRunCurrentStep() {
+        if( timesAlreadyRunStepMap.get(currentPosition) <= maxAmountReRunEachStep  ){
+            currentPosition--;
+        }
+    }
+
+    public void reRunAllPipeline() {
+        if( timesAlreadyRunPipeline < maxAmountReRunPipeline ){
+            timesAlreadyRunPipeline++;
+            currentPosition = INITIAL_INT_POSITION;
+            timesAlreadyRunStepMap.clear();
+        }
+    }
+
+    public void abortPipeline() {
+        currentPosition = size + 99;
     }
 
 }

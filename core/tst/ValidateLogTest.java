@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 
 import sparkpipeline.core.context.CommandQueue;
+import sparkpipeline.core.context.ControllerExecution;
 import sparkpipeline.core.context.CommandQueue.TypeCommand;
 import sparkpipeline.core.context.DatasetStore;
 import sparkpipeline.core.context.DatasetStoreCommand;
@@ -15,7 +16,7 @@ class ValidateLogTest {
     @Test
     void validateAnyThing() {
 
-        CommandQueue c = new CommandQueue(new DatasetStore());
+        CommandQueue c = new CommandQueue(new DatasetStore(), new ControllerExecution(1, 1));
 
         c.addCommand(new DatasetStoreCommand() {
 

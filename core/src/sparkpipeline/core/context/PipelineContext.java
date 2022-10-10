@@ -46,6 +46,10 @@ public class PipelineContext {
         return queue;
     }
 
+    public ControllerExecution controllerExecution() {
+        return queue.controllerExecution();
+    }
+
     public PipelineContext newVar(String key, Object value) {
         Objects.requireNonNull(key);
 
@@ -86,15 +90,4 @@ public class PipelineContext {
         return sparkSession;
     }
 
-    public void executionReRunCurrentOne(Integer times) {
-        this.commandQueue().doActionIntoExecution(ControllerExecution.ActionType.RE_RUN_CURRENT_ONE, times);
-    }
-
-    public void executionReRunAllPipeline(Integer times) {
-        this.commandQueue().doActionIntoExecution(ControllerExecution.ActionType.START_OVER, times);
-    }
-
-    public void executionAbortAllPipeline() {
-        this.commandQueue().doActionIntoExecution(ControllerExecution.ActionType.ABORT_PIPELINE, null);
-    }
 }

@@ -1,15 +1,15 @@
 package sparkpipeline.core.context;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import sparkpipeline.core.constant.Msg;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
 
 public class CommandQueue {
 
@@ -47,10 +47,11 @@ public class CommandQueue {
 
     private final List<CommandMetadata> commandList = new LinkedList<>();
     private DatasetStore datasetStore;
-    private final ControllerExecution controllerExecution = new ControllerExecution();
+    private final ControllerExecution controllerExecution;
 
-    public CommandQueue(DatasetStore datasetStore) {
+    public CommandQueue(DatasetStore datasetStore, ControllerExecution controllerExecution) {
         this.datasetStore = datasetStore;
+        this.controllerExecution = controllerExecution;
     }
 
     public void overrideDatasetStore(DatasetStore datasetStore) {
@@ -58,12 +59,12 @@ public class CommandQueue {
         this.datasetStore = datasetStore;
     }
 
-    public void doActionIntoExecution(ControllerExecution.ActionType action,Integer times) {
-        this.controllerExecution.doAction(action,times);
-    }
-
     public DatasetStore datasetStore() {
         return datasetStore;
+    }
+
+    public ControllerExecution controllerExecution() {
+        return controllerExecution;
     }
 
     public Dataset<Row> datasetByKey(String keyDataset) {
@@ -87,14 +88,12 @@ public class CommandQueue {
         Objects.requireNonNull(context, Msg.CONTEXT_CANNOT_BE_NULL);
         Objects.requireNonNull(datasetStore, Msg.DATASETSTORE_CANNOT_BE_NULL);
 
-        this.controllerExecution.setSizeRunning(commandList.size() - 1);
+        this.controllerExecution.setSize(commandList.size());
 
-        while (this.controllerExecution.hasNext()) {
-            CommandMetadata commandMetadata = commandList.get(this.controllerExecution.getCurrentRunning());
-            logger.info("command_index = {} , command_metadata = {}", this.controllerExecution.getCurrentRunning(),
-                    commandMetadata);
+        while (this.controllerExecution.next()) {
+            CommandMetadata commandMetadata = commandList.get(this.controllerExecution.getCurrentPosition() -1);
+            logger.info("command_index = {} , command_metadata = {}", this.controllerExecution.getCurrentPosition(), commandMetadata);
             commandMetadata.command.changeDatasetStore(context).accept(datasetStore);
-            this.controllerExecution.doAction(ControllerExecution.ActionType.RUN_NEXT,null);
         }
 
     }
