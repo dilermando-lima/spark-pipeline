@@ -3,3 +3,10 @@ include (
     "core",
     "example"
 )
+
+// used in :example project
+// sourceControl {
+//     gitRepository("https://github.com/dilermando-lima/spark-pipeline.git") {
+//         producesModule("sparkpipeline.core:core")
+//     }
+// }
