@@ -1,5 +1,16 @@
 # SPARK-PIPELINE
 
+  * [About this project](#about-this-project)
+  * [Simple example using spark-pipeline](#simple-example-using-spark-pipeline)
+  * [Implement dependency in your project](#implement-dependency-in-your-project)
+    + [Download from git](#download-from-git)
+    + [Add  as sourceControl and use as multimodule](#add--as-sourcecontrol-and-use-as-multimodule)
+  * [Requirements](#requirements)
+  * [Context Builder](#context-builder)
+  * [Code Examples](#code-examples)
+    + [Customizing logs programatically](#customizing-logs-programatically)
+    + [Handle arguments, variables and external configurations](#handle-arguments--variables-and-external-configurations)
+
 ## About this project
 spark-pipeline project is a solutions to solve all chalenges belows when we are working with [apache spark](https://spark.apache.org/docs/latest/index.html) in huge projects and complex solutions.
 
@@ -85,32 +96,100 @@ dependencies {
 ```
 > All example source are place in [./example/src/*](./example/src/sparkpipeline/example)
 
-## Api
+## Context Builder
 
-
-
-## Examples
-
-## Customizing logs programatically
+When creating a pipeline with `.init()` will be used default settings
+```Java
+Pipeline.init().anyRunning(...).execute();
+```
+If you need add custom setting into context on pipeline executions use `PipelineContextBuilder`
 
 ```Java
+// declare contextBuilder
+PipelineContextBuilder contextBuilder = PipelineContextBuilder
+    .init()
+
+    // collect vars into context
+    .collectVarsFromArgs(...)
+    .collectVarsFromFile(...)
+    .collectVarsFromMap(...)
+    .addVarCollector(...) // custom implementation
+
+    // log settings
+    .setLogConfig(...)
+
+    // settings to limit rerun steps and pipeline
+    .setMaxAmountReRunEachStep(...)
+    .setMaxAmountReRunPipeline(...)
+
+    // add custom spark config configuration
+    .sparkConfigBuilder(...)
+    
+    // add actions into start-cycle context
+    .beforeStartContext(...)
+    .afterStartLogConfig(...)
+    .afterStartContext(...)
+    .afterRetrieveAllContextVars(...); 
+
+// creating pipeline with contextBuilder created above
+Pipeline.initWithContextBuilder(contextBuilder)
+    .anyRunning(context -> { 
+      /* running any peace of code with custom settings in context  */
+    })
+    .execute();
+
+```
+## Code Examples
+
+### Customizing logs programatically
+
+```Java
+
 LogConfig logConfig = LogConfig.init()
   // .logConsolePattern("%d{HH:mm:ss.sss} %p %25.25c : %m%n")
   .logConsoleLevel("org.apache.spark", Level.WARN) // silent spark logs
   .logConsoleLevel("sparkpipeline.core", Level.INFO)
-  .logConsoleLevel("sparkpipeline.example", Level.INFO);
+  .logConsoleLevel("com.my.application", Level.INFO);
 
 PipelineContextBuilder contextBuilder = PipelineContextBuilder
   .init()
   .setLogConfig(logConfig);
 
-Pipeline.initWithContextBuilder(contextBuilder)
-  .read(DATASET_1, ReaderCSV.init(DATASET_1_PATH_INPUT).hasHeader(true))
-  .anyRunning(context -> context.datasetByKey(DATASET_1).show())
-  .transform(DATASET_1, context -> context.datasetByKey(DATASET_1).groupBy("category").agg(sum("value")))
-  .persist(DATASET_1)
-  .anyRunning(context -> context.datasetByKey(DATASET_1).show())
-  .write(DATASET_1, WriterCSV.init(DATASET_1_TRANSF_PATH_OUTPUT))
+Pipeline
+  .initWithContextBuilder(contextBuilder)
+  // all step declaration here...
   .execute();
+
 ```
+
+> Complete example for log settngs in [./example/src/sparkpipeline/example/LogConfigExample.java*](./example/src/sparkpipeline/example/LogConfigExample.java)
+
+### Handle arguments, variables and external configurations
+
+`spark-pipeline` has by default 3 implementations to collect variables into context:
+ - by Arguments
+ - from Map<String,Object>
+ - file reading ( file will be reading by sparkSession )
+
+We can use variables declaring as `${VAR}` or `${VAR:default_value}`
+
+```Java
+PipelineContextBuilder contextBuilder = PipelineContextBuilder
+	.init()
+	.collectVarsFromArgs(args) // collect vars from application vars
+	.collectVarsFromMap(Map.of("ENVIRONMENT", "prd")) // collect from map
+	.collectVarsFromFile("vars1.env") // collect from file
+	.collectVarsFromFile("vars2-${ENVIRONMENT}.properties") // collect from file using var already added before
+	.addVarCollector(new MyCollectorVars()); // collect using customized implementation
+
+Pipeline.initWithContextBuilder(contextBuilder)
+	.anyRunning(context -> {
+		System.out.println("ENVIRONMENT: " + context.varByKey("ENVIRONMENT"));
+	})
+	.read("DATASET1", ReaderCSV.init("${DATASET_1_PATH_INPUT}")) // get path from context vars
+	.write(DATASET_1, WriterCSV.init("${DATASET_1_TRANSF_PATH_OUTPUT}")) // get path from context vars
+	.execute();
+```
+
+> Complete example for log settngs in [./example/src/sparkpipeline/example/EnvVarsExample.java*](./example/src/sparkpipeline/example/EnvVarsExample.java)
 
