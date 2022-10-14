@@ -15,6 +15,7 @@ public abstract class AbstractWriter<W> {
     private PipelineContext context;
     private Predicate<PipelineContext> mockEnableBuilder = c -> false;
     private Consumer<PipelineContext> mockWriterBuilder;
+    private BiConsumer<Throwable,PipelineContext> whenThrowError = null;
 
     public W overrideContext(PipelineContext context) {
         Objects.requireNonNull(context, "context cannot be null");
@@ -34,17 +35,32 @@ public abstract class AbstractWriter<W> {
         return returnChildImplementation();
     }
 
+    public W whenThrowError(BiConsumer<Throwable,PipelineContext> whenThrowError){
+        this.whenThrowError = whenThrowError;
+        return returnChildImplementation();
+    }
+
     abstract BiConsumer<PipelineContext, Dataset<Row>> writeImplementation();
 
     abstract W returnChildImplementation();
 
+    @SuppressWarnings("java:S1181")
     public void write(Dataset<Row> dataset) {
         Objects.requireNonNull(context, "context cannot be null");
         if (mockEnableBuilder.test(context)) {
             mockWriterBuilder.accept(context);
         } else {
             Objects.requireNonNull(writeImplementation(), "writeImplementation() cannot return null");
-            writeImplementation().accept(context, dataset);
+            
+            try{
+                writeImplementation().accept(context, dataset);
+            }catch(Throwable throwable){
+                if( whenThrowError != null ) {
+                    whenThrowError.accept(throwable, context);
+                }else{
+                    throw throwable;
+                }
+            }
         }
     }
 

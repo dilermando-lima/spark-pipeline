@@ -19,9 +19,8 @@ public class DatasetStore {
     public void save(String keyDataset, Dataset<Row> dataset) {
         logger.info("Saving dataset : keyDataset = {}", keyDataset);
         Objects.requireNonNull(keyDataset, Msg.KEY_DATASET_CANNOT_BE_NULL);
-        Objects.requireNonNull(dataset, Msg.DATASET_CANNOT_BE_NULL);
         storeMap.put(keyDataset, dataset);
-        dataset.createOrReplaceTempView(keyDataset);
+        if( dataset != null ) dataset.createOrReplaceTempView(keyDataset);
     }
 
     public Dataset<Row> datasetByKey(String keyDataset) {

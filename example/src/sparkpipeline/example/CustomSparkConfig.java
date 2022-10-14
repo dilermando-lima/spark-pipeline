@@ -25,7 +25,7 @@ class CustomSparkConfig {
 
         PipelineContextBuilder contextBuilder = PipelineContextBuilder
             .init()
-            .collectVarsFromMap(null)
+            .collectVarsFromMap(mapVars)
             .sparkConfigBuilder(context -> 
                 new SparkConf()
                         .setAppName(context.handleStringFromContextVars("APP-NAME-${ENVIRONMENT}"))

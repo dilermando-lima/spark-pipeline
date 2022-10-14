@@ -28,7 +28,7 @@ class TransformationsExample {
 
                 // transform dataset with methods into new dataset
                 .transform(DATASET_2, context -> context.datasetByKey(DATASET_1).groupBy("category").agg(sum("value")))
-                // transform dataset with sqlContext
+               // transform dataset with sqlContext into new dataset
                 .transformSql(DATASET_3, context -> String.format("select * from %s where category is not null", DATASET_1))
                 
                 .anyRunning(context -> {

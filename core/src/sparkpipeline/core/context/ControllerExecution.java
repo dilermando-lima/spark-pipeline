@@ -67,7 +67,7 @@ public class ControllerExecution {
     }
 
     public void reRunCurrentStep() {
-        if( timesAlreadyRunStepMap.get(currentPosition) <= maxAmountReRunEachStep  ){
+        if( timesAlreadyRunStepMap.get(currentPosition) < maxAmountReRunEachStep  ){
             currentPosition--;
         }
     }
