@@ -14,7 +14,7 @@
     + [Customizing spark configurations](#customizing-spark-configurations)
     + [Transform datasets in pipeline steps](#transform-datasets-in-pipeline-steps)
     + [Read and writing datasets](#read-and-writing-datasets)
-    + [Mocki reading and writing in steps](#mocki-reading-and-writing-in-steps)
+    + [Mock reading and writing in steps](#mock-reading-and-writing-in-steps)
     + [Manage flow of running in pipeline steps](#manage-flow-of-running-in-pipeline-steps)
     + [Adding Custom functions to spartk session](#adding-custom-functions-to-spartk-session)
 
