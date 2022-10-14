@@ -8,7 +8,7 @@
   * [Requirements](#requirements)
   * [Context Builder](#context-builder)
   * [Code Examples](#code-examples)
-    + [Customizing logs programatically](#customizing-logs-programatically)
+    + [Customizing logs programmatically](#customizing-logs-programmatically)
     + [Handle arguments, variables and external configurations](#handle-arguments-variables-and-external-configurations)
     + [Add and retrieve vars into context](#add-and-retrieve-vars-into-context)
     + [Customizing spark configurations](#customizing-spark-configurations)
@@ -19,13 +19,13 @@
     + [Adding Custom functions to spartk session](#adding-custom-functions-to-spartk-session)
 
 ## About this project
-spark-pipeline project is a solutions to solve all chalenges belows when we are working with [apache spark](https://spark.apache.org/docs/latest/index.html) in huge projects and complex solutions.
+spark-pipeline project is a solutions to solve all challenges below when we are working with [apache spark](https://spark.apache.org/docs/latest/index.html) in huge projects and complex solutions.
 
   - Create pipeline flows declared by step managing all executions
   - Manage input variables by application argumments, environment variables, getting from files and other implementations
   - Manage dataset reading, transformation and loading through pipelines
-  - Manage log configuration programatically for all application, this project and even apache spark
-  - Give us a way to mock reading and loading actions by condictions as you prefer
+  - Manage log configuration programmatically for all application, this project and even apache spark
+  - Give us a way to mock reading and loading actions by conditions as you prefer
 
 ## Simple example using spark-pipeline
 
@@ -47,7 +47,7 @@ Pipeline
 
 ## Implement dependency in your project
 
-All core source are place in [./core/src/*](./core/src/sparkpipeline/core)
+All core source is place in [./core/src/*](./core/src/sparkpipeline/core)
 
 ### Download from git
 
@@ -82,7 +82,7 @@ dependencies {
 
 ## Requirements
 
-Your project must contains:
+Your project must contain:
   - Version source java8+
   - Spark core dependencie
   - Spark sql dependencie
@@ -148,7 +148,7 @@ Pipeline.initWithContextBuilder(contextBuilder)
 ```
 ## Code Examples
 
-### Customizing logs programatically
+### Customizing logs programmatically
 
 ```Java
 
@@ -258,7 +258,7 @@ Pipeline.init()
 .transformSql(DATASET_3, context -> String.format("select * from %s where category is not null", DATASET_1))
 .execute();
 ```
-We can perstis, unpersis and remove dataset from context as follow:
+We can persti, unpersist and remove datasets from context as follows:
 
 ```Java
 Pipeline.init()
@@ -271,7 +271,7 @@ Pipeline.init()
 .execute();
 ```
 
-If you need use specifics methods in dataset on context use `context.datasetByKey("datasetKey")` inside any step
+If you need use specifics methods in dataset on context, use `context.datasetByKey("datasetKey")` inside any step
 
 > Complete example for transformations placed in [./example/src/sparkpipeline/example/TransformationsExample.java](./example/src/sparkpipeline/example/TransformationsExample.java)
 
@@ -286,7 +286,7 @@ Pipeline.init()
 .execute();
 ```
 
-There are 5 reading implementations as defatul until now:
+There are 5 reading implementations as default until now:
 
 ```Java
 sparkpipeline.core.reader.ReaderJDBC.init()...
@@ -296,7 +296,7 @@ sparkpipeline.core.reader.ReaderText.init()...
 sparkpipeline.core.reader.ReaderParquet.init()...
 ```
 
-There are 2 writing implementations as defatul until now:
+There are 2 writing implementations as default until now:
 
 ```Java
 sparkpipeline.core.reader.WriterCSV.init()...
@@ -305,7 +305,7 @@ sparkpipeline.core.reader.WriterParquet.init()...
 
 > When using `Pipeline.read()` and `Pipeline.write()` we got all benefits for context vars, mock executions and functional exectution in pipeline steps. 
 
-### Mocki reading and writing in steps
+### Mock reading and writing in steps
 
 All implementations of `sparkpipeline.core.reader.AbstractReader` and `sparkpipeline.core.reader.AbstractWriter` has a way to mock their actions
 
